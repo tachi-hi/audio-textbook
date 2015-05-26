@@ -1,0 +1,275 @@
+\documentclass[a4paper]{jsarticle}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{listings}
+\lstset{language=R,
+  frame=tRBl,
+  basicstyle=\footnotesize\ttfamily,
+  columns=[l]{fullflexible}
+  framesep=5pt
+}
+
+\usepackage{url}
+\usepackage{fancybox}
+\newcommand{\search}{~$\spadesuit$}
+\newcommand{\enter}{~\ovalbox{$\hookleftarrow$}~}
+\newcommand{\enshu}{\paragraph{Excercise}}
+
+
+\title{audio-textbook}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\section{この文書について}
+この文書は音響信号処理の初歩的事項に関する資料です。
+おおよそ大学1〜2年生くらいが2〜3時間くらいで取り組むことをイメージしています．
+Rを使います．
+
+2009年の初稿以降少しずつマイナーチェンジしています．
+
+\subsection{今後の改訂予定}
+随時コンテンツの追加を予定．
+
+\subsection{凡例}
+\begin{itemize}
+\item \search{}: 検索
+\item \enter{}: エンター
+\end{itemize}
+
+
+\pagebreak
+\section{Rのインストール、その他下準備}
+\subsection{パソコンの用意}
+\begin{enumerate}
+\item パソコンを用意してください．
+\item ネットに接続してください．
+\end{enumerate}
+
+\subsection{R}
+\begin{enumerate}
+\item 各自の環境にRをインストールします。\search
+\item Rを起動します。
+\item \texttt{install.packages("tuneR")} と入力してエンター\enter{}を押します。
+するとオーディオファイル入出力などの機能が一式揃った\texttt{tuneR}というパッケージがインストールされます。
+\item \texttt{library(tuneR)}\enter{} これで\texttt{tuneR}パッケージがロードされます。
+\end{enumerate}
+
+\subsection{データの用意}
+\begin{enumerate}
+\item 適当に\texttt{*.wav}形式のファイルを用意します。PCの録音機能を使ったり、ネットから適当に拾ってきたりします。(\url{https://github.com/tachi-hi/sampleSounds}など)
+\end{enumerate}
+
+\pagebreak
+\section{正弦波をプロット}
+Rのコンソールで以下のように入力します．（``\#" 以降はコメントなので入力しなくていいです．）
+
+\begin{lstlisting}
+ f  <- 440                  # 周波数 440 Hz
+ fs <- 16000                # サンプリングレート 16000 Hz 
+ t  <- 1:(3 * fs) / fs      # 時間．長さ 3 秒
+ x  <- sin (2 * pi * f * t) # 信号
+ plot (x)                   # 信号をプロット
+\end{lstlisting}
+これで
+\[
+x(t) = \sin 2\pi f t, \quad (f = 440 \mathrm{Hz}, 0 \mathrm{[s]} < t \le 3 \mathrm{[s]})
+\] という信号をプロットできます。
+
+\subsection{文法の解説}
+Rでは代入を
+\texttt{
+ a <- 1
+}
+というふうに表記します．\texttt{<-}という記号は左向き矢印$\leftarrow$をASCII文字だけで表現したものです．
+
+コロン``\texttt{:}"は数列の意味です．\texttt{1:10}はベクトル
+\begin{lstlisting}
+c(1,2,3,4,5,6,7,8,9,10)
+\end{lstlisting}
+と同じ意味です．\texttt{c(\dots)}というのはRでベクトルを意味します．
+\texttt{1:10 / 100}は，\texttt{1:10}の各成分を100で割ることを意味します．つまり以下の二つは同じ意味です．
+\begin{lstlisting}
+a <- 1:10 / 100
+a <- c(0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1)
+\end{lstlisting}
+
+\pagebreak
+\section{図を拡大}
+前章ではわけの分からない図しか表示されませんでした．
+しかし，この一部をアップして表示してみると，正弦波になっていることがわかります。
+ここでは図の拡大の方法を試します．
+
+前章で作った信号 \texttt{x} は長さ16000のベクトルですが、以下のようなコマンドで最初の100要素だけを見ることができます。
+\begin{lstlisting}
+ plot(x[1:100])
+\end{lstlisting}
+違う部分を見たい場合は \texttt{[1:100]}の代わりに\texttt{[1000:1100]}などとすればOKです．
+以下のExcerciseを実際にいろいろ試してみてください．
+
+
+\enshu
+\begin{itemize}
+\item \texttt{x} の最初の10要素を見るにはどうすればいいか
+\item \texttt{x} の最後の100要素を見るにはどうすればいいか
+\item \texttt{plot(x[1:100], type = "b")} とするとどうなるか．
+\item 同じく，\texttt{type = "l"} とするとどうなるか．
+\item 周波数が1000 Hzの信号\texttt{y}を作って，同様にいろいろな箇所を表示
+\item \texttt{x <- sin(2 * pi * f * t)}で，$\sin$の代わりに$\cos$や$\tan$にした場合について，同様にいろいろな箇所を表示
+\item $\tan$にした場合はよくわからない波形が表示されるはずです．縦軸に注目して，その理由について考えてみてください．
+\end{itemize}
+
+
+\pagebreak
+\section{音を聴く}
+
+上で作った音 \texttt{x} がどんな音なのか聞いてみます．
+\texttt{tuneR}をロードしている状態で以下のように入力すると
+\texttt{x}を \texttt{test.wav}に保存することができます．
+
+\begin{lstlisting}
+obj <- Wave(x, samp.rate = 16000, bit = 16)
+writeWave( normalize (obj, unit = "1"), filename = "test.wav" )
+\end{lstlisting}
+
+\texttt{test.wav}を再生してみましょう．
+（鳴らない場合はPCのボリュームがどうなっているか試しにニコニコ動画に接続して調べてみてください．）
+これは440Hzの正弦波です．
+
+\enshu
+\begin{itemize}
+\item 先程作った\texttt{x}は440Hzで長さ3秒の信号です．880Hzで長さ3秒の信号を作って同様に聞いてみてください．
+\item 220Hz, 長さ5秒
+\item 330Hz, 長さ5秒
+\item 660Hz, 長さ5秒
+\item ドレミファソラシド全部の音を作ってみましょう．それぞれの周波数は以下の以下の通りです．
+\end{itemize}
+\begin{tabular}{|l|l|l|}\hline
+音名&周波数&Rでの入力方法 \\ \hline
+ ド& $440 \times 2^{-9/12}$ Hz&  \texttt{440 * 2**(-9/12)}\\ \hline 
+ レ& $440 \times 2^{-7/12}$ Hz&  \texttt{440 * 2**(-7/12)}\\ \hline 
+ ミ& $440 \times 2^{-5/12}$ Hz&  \texttt{440 * 2**(-5/12)}\\ \hline 
+ ファ& $440 \times 2^{-4/12}$ Hz&\texttt{440 * 2**(-4/12)}\\ \hline 
+ ソ& $440 \times 2^{-2/12}$ Hz&  \texttt{440 * 2**(-2/12)}\\ \hline 
+ ラ& $440$ Hz&  \texttt{440} \\ \hline
+ シ& $440 \times 2^{2/12}$ Hz&  \texttt{440 * 2**(2/12)} \\ \hline
+\end{tabular}
+
+\pagebreak
+\section{関数定義}
+いちいちコマンドを打つのは面倒なので，いろいろな処理をひとまとめにした\textbf{関数 (function)}を作ると便利です．
+たいていのプログラミング言語には関数を作る機能があります．Rでも関数が作れます．
+
+\begin{lstlisting}
+sig.gen <- function(freq, sec){ 
+ fs <- 16000                   # サンプリングレート 16000 Hz 
+ t  <- 1:(sec * fs) / fs       # 時間．長さ sec 秒
+ x  <- sin (2 * pi * freq * t) # 信号
+ return (x)
+}
+
+my.save <- function(signal, fn){
+  obj <- Wave(signal, samp.rate = 16000, bit = 16)
+  writeWave( normalize (obj, unit = "16"), filename = fn )
+}
+\end{lstlisting}
+
+これらの関数を使うと，ドレミファソラシドのセーブは以下のように書けます．
+\begin{lstlisting}
+my.save(sig.gen(440 * 2**(-9/12), 5), "do.wav")
+my.save(sig.gen(440 * 2**(-7/12), 5), "re.wav")
+my.save(sig.gen(440 * 2**(-5/12), 5), "mi.wav")
+my.save(sig.gen(440 * 2**(-4/12), 5), "fa.wav")
+my.save(sig.gen(440 * 2**(-2/12), 5), "sol.wav")
+my.save(sig.gen(440             , 5), "la.wav")
+my.save(sig.gen(440 * 2**(2/12),  5), "si.wav")
+\end{lstlisting}
+
+\pagebreak
+\section{倍音を付加して様々な音色を作る}
+\subsection{倍音とは何か？}
+ある周波数$f$の整数倍の周波数$nf (n = 2, 3, 4, \cdots)$を，$f$の\textbf{倍音(harmonics)}といいます．
+倍音に対して，$f$のことは\textbf{基本周波数(fundamental frequency)}といいます．
+音楽などで使われる音は，おおむね
+基本周波数と倍音の重ね合わせによって表現される音が多いです．
+
+音楽に限らず，周期信号$x(t - 1/f) = x(t)$は，基本周波数と倍音の重ね合わせによって表現されます．
+これは\textbf{フーリエ級数(Fourier series)}と呼ばれます．
+\[
+x(t) = \sum_{k = 0}^{\infty} a_k \sin (2\pi k f t + \phi_k)
+\]
+具体的には
+\[
+x(t) = 定数 + a_1 \sin (2\pi f t + \phi_1) + a_2 \sin(2\pi 2f t + \phi_2) + a_3 \sin(2\pi 3f t + \phi_3) + a_3 \sin(2\pi 4f t + \phi_4) + \cdots
+\]
+です．音楽信号の分析を考えるときには，左辺$x(t)$が与えられたときに，右辺の$a_k$（振幅）と $\phi_k$（位相）を求めることが問題になりますが，
+ここでは逆に，右辺の$a_k, \phi_k$を適当に決めて，左辺の$x(t)$をいろいろと生成してみることを考えてみましょう．
+
+\subsection{倍音を含む音を作る}
+前章のsig.genを次のように改造します．具体的にいうと引数に位相$\phi$をとれるようにします．
+\begin{lstlisting}
+sig.gen <- function(freq, sec, phi){ 
+ fs <- 16000                   # サンプリングレート 16000 Hz 
+ t  <- 1:(sec * fs) / fs       # 時間．長さ sec 秒
+ x  <- sin (2 * pi * freq * t + phi) # 信号
+ return (x)
+}
+\end{lstlisting}
+
+これを使って，以下のような振幅と位相を持った信号を作ってみましょう．
+\[
+a_k = \frac{1}{k}, \phi_k = 0
+\]
+これは「のこぎり波」と呼ばれている信号です．
+\begin{lstlisting}
+x <- 1 *     sig.gen(440, 5, 0) + 
+     0.5 *   sig.gen(880, 5, 0) +
+     0.333 * sig.gen(1320, 5, 0) +
+     0.25 *  sig.gen(1760, 5, 0) +
+     0.2 *   sig.gen(2200, 5, 0) +
+     0.167 * sig.gen(2640, 5, 0) +
+     0.143 * sig.gen(3080, 5, 0) +
+     0.125 * sig.gen(3520, 5, 0) +
+     0.111 * sig.gen(3960, 5, 0)     
+\end{lstlisting}
+波形を見てみましょう．
+\begin{lstlisting}
+plot(x[1:100], type = "b")
+\end{lstlisting}
+音を聞いてみましょう．
+\begin{lstlisting}
+my.save(x, "nokogiri.wav")
+\end{lstlisting}
+
+上の定義では第9倍音まで考えていましたが，今度は第18倍音まで含めた信号を作ってみましょう．
+\texttt{for}文を使うと便利です．
+\begin{lstlisting}
+x <- sig.gen(440, 5, 0)
+for(k in 2:18){
+  x <- x + sig.gen(440 * k, 5, 0) / k
+}
+\end{lstlisting}
+その波形を見て，音を聞いてみましょう．
+\enshu 
+第30倍音まで含めるとどのような音になるか？　→　標本化定理\search{}
+
+\enshu その2
+\[
+a_k = \begin{cases}
+\frac{1}{k}, & k\text{は奇数} \\
+0, & k\text{は偶数}
+\end{cases},
+\phi_k = 0
+\]
+としてみるとどうなるか？(for文を使って書いてみる)
+→矩形波\search{}
+
+\enshu その3
+$a_k, \phi_k$を自分の好きなように適当に決めていろいろな音を作ってみてください．
+
+
+
+\end{document}
+
